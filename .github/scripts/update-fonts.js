@@ -50,7 +50,7 @@ async function main() {
 		}
 
 		console.log('Generating PHP content...');
-		const phpContent = generatePHPContent(fonts);
+		const fontsArrayContent = generateFontsArrayContent(fonts);
 		const fontNamesContent = generateFontNamesArrayContent(fonts);
 
 		console.log('Writing to files...');
