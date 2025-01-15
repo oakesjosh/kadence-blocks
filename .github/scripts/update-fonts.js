@@ -7,7 +7,7 @@ async function fetchGoogleFonts() {
 	return response.data;
 }
 
-function generatePHPContent(fonts) {
+function generateFontsArrayContent(fonts) {
 	let content = `<?php
           /**
            * Returns an array of Google fonts and their properties for the frontend font selector
