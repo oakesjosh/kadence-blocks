@@ -107,6 +107,17 @@ jobs:
                         "options": {
                           "activate": true
                         }
+                      },
+                      {
+                        "step": "installTheme",
+                        "themeData": {
+                            "resource": "wordpress.org/themes",
+                            "slug": "kadence"
+                        },
+                        "options": {
+                            "activate": true,
+                            "importStarterContent": true
+                        }
                       }
                     ]
                   }' | base64 -w 0)
