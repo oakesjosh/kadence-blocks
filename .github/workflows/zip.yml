@@ -30,7 +30,19 @@ jobs:
             production: ${{ steps.set_var.outputs.production }}
             slack_channel: ${{ steps.set_var.outputs.slack_channel }}
             slack_thread: ${{ steps.set_var.outputs.slack_thread }}
+            zip_name: ${{ steps.get_zip_name.outputs.zip_name }}
+
         steps:
+            - name: Checkout Branch
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GH_BOT_TOKEN }}
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                php-version: '7.4'
+                
             - name: Prepare job variables
               if: github.event_name == 'pull_request'
               run: |
@@ -55,21 +67,52 @@ jobs:
                   echo "slack_channel=${{ env.JOB_SLACK_CHANNEL }}" >> $GITHUB_OUTPUT
                   echo "slack_thread=${{ env.JOB_SLACK_THREAD }}" >> $GITHUB_OUTPUT
 
-    zip:
-        uses: stellarwp/github-actions/.github/workflows/zip.yml@main
-        needs:
-            - set_vars
-        with:
-            ref: ${{ needs.set_vars.outputs.ref }}
-            production: ${{ needs.set_vars.outputs.production }}
-            slack_channel: ${{ needs.set_vars.outputs.slack_channel }}
-            slack_thread: ${{ needs.set_vars.outputs.slack_thread }}
-        secrets:
-            COMPOSER_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
-            GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
-            JENKINS_SECRET: ${{ secrets.ZIP_JENKINS_SECRET }}
-            S3_BUCKET: ${{ secrets.ZIP_S3_BUCKET }}
-            S3_ACCESS_KEY_ID: ${{ secrets.ZIP_S3_ACCESS_KEY_ID }}
-            S3_SECRET_ACCESS_KEY: ${{ secrets.ZIP_S3_SECRET_ACCESS_KEY }}
-            S3_REGION: ${{ secrets.ZIP_S3_REGION }}
-            S3_ENDPOINT: ${{ secrets.ZIP_S3_ENDPOINT }}
+            - name: Get version and zip name
+              id: get_zip_name
+              run: |
+                  # Get version based on production flag
+                  if [ "${{ env.JOB_PRODUCTION }}" = "yes" ]; then
+                    VERSION=$(composer -- pup get-version)
+                  else
+                    VERSION=$(composer -- pup get-version --dev)
+                  fi
+                  
+                  # Get zip name using the version
+                  ZIP_NAME=$(composer -- pup zip-name $VERSION)
+                  
+                  # Set outputs
+                  echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Add PR comment
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v7
+              with:
+                github-token: ${{ secrets.GH_BOT_TOKEN }}
+                script: |
+                  const zipName = '${{ steps.get_zip_name.outputs.zip_name }}';
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.name,
+                    issue_number: context.issue.number,
+                    body: `The zip file name will be: \`${zipName}.zip\``
+                  });
+
+    # zip:
+    #     uses: stellarwp/github-actions/.github/workflows/zip.yml@main
+    #     needs:
+    #         - set_vars
+    #     with:
+    #         ref: ${{ needs.set_vars.outputs.ref }}
+    #         production: ${{ needs.set_vars.outputs.production }}
+    #         slack_channel: ${{ needs.set_vars.outputs.slack_channel }}
+    #         slack_thread: ${{ needs.set_vars.outputs.slack_thread }}
+    #     secrets:
+    #         COMPOSER_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+    #         GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+    #         JENKINS_SECRET: ${{ secrets.ZIP_JENKINS_SECRET }}
+    #         S3_BUCKET: ${{ secrets.ZIP_S3_BUCKET }}
+    #         S3_ACCESS_KEY_ID: ${{ secrets.ZIP_S3_ACCESS_KEY_ID }}
+    #         S3_SECRET_ACCESS_KEY: ${{ secrets.ZIP_S3_SECRET_ACCESS_KEY }}
+    #         S3_REGION: ${{ secrets.ZIP_S3_REGION }}
+    #         S3_ENDPOINT: ${{ secrets.ZIP_S3_ENDPOINT }}
