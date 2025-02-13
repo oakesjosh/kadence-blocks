@@ -81,7 +81,7 @@ jobs:
                   fi
                   
                   # Get zip name using the version
-                  ZIP_NAME=$(composer -- pup zip-name $VERSION)
+                  ZIP_NAME=https://evnt.is/test.zip?file=$(composer -- pup zip-name $VERSION)
                   
                   # Set outputs
                   echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
