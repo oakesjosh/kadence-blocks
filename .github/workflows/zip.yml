@@ -40,6 +40,9 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                 php-version: '7.4'
+
+            - name: Install pup
+              run: composer -- pup
                 
             - name: Prepare job variables
               if: github.event_name == 'pull_request'
@@ -76,11 +79,52 @@ jobs:
                   fi
                   
                   # Get zip name using the version
-                  ZIP_NAME=$(composer -- pup zip-name $VERSION)
+                  # ZIP_NAME=https://evnt.is/test.zip?file=$(composer -- pup zip-name $VERSION)
+                  ZIP_NAME=https://evnt.is/test.zip?file=kadence-blocks.3.4.9.zip
                   
                   # Set outputs
                   echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Create WordPress Playground URL
+              id: create_playground_url
+              run: |
+                  # Base64 encode the blueprint JSON
+                  BLUEPRINT=$(echo '{
+                    "preferredVersions": {
+                      "php": "8.0",
+                      "wp": "latest"
+                    },
+                    "steps": [
+                      {
+                        "step": "installPlugin",
+                        "pluginData": {
+                          "resource": "url",
+                          "url": "${{ steps.get_zip_name.outputs.zip_name }}"
+                        },
+                        "options": {
+                          "activate": true
+                        }
+                      },
+                      {
+                        "step": "installTheme",
+                        "themeData": {
+                            "resource": "wordpress.org/themes",
+                            "slug": "kadence"
+                        },
+                        "options": {
+                            "activate": true,
+                            "importStarterContent": true
+                        }
+                      }
+                    ]
+                  }' | base64 -w 0)
+                  
+                  # Create the playground URL
+                  PLAYGROUND_URL="https://playground.wordpress.net/#${BLUEPRINT}"
+                  
+                  # Set output
+                  echo "url=$PLAYGROUND_URL" >> $GITHUB_OUTPUT
 
             - name: Add PR comment
               if: github.event_name == 'pull_request'
@@ -88,11 +132,14 @@ jobs:
               with:
                 script: |
                   const zipName = '${{ steps.get_zip_name.outputs.zip_name }}';
+                  const playgroundUrl = '${{ steps.create_playground_url.outputs.url }}';
                   await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.name,
+                    ...context.repo,
                     issue_number: context.issue.number,
-                    body: `The zip file name will be: \`${zipName}.zip\``
+                    body: `🎉 Build artifacts ready:
+                    
+                    - Download zip: \`${zipName}.zip\`
+                    - [Try it in WordPress Playground](${playgroundUrl})`
                   });
 
     # zip:
