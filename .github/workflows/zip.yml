@@ -42,6 +42,9 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                 php-version: '7.4'
+
+            - name: Install pup
+              run: composer -- pup
                 
             - name: Prepare job variables
               if: github.event_name == 'pull_request'
