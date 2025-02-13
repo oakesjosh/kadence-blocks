@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Kadence Blocks – Gutenberg Blocks for Page Builder Features
  * Plugin URI: https://www.kadencewp.com/product/kadence-gutenberg-blocks/
- * Description: Advanced Page Building Blocks for Gutenberg. Create custom column layouts, backgrounds, dual buttons, icons etc.
+ * Description: Advanced Page Building Blocks for Gutenberg. Create custom column layouts, backgrounds, dual buttons, icons etc
  * Author: Kadence WP
  * Author URI: https://www.kadencewp.com
  * Version: 3.4.9
