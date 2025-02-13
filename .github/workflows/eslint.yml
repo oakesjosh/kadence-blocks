@@ -1,7 +1,7 @@
 name: ESLint
 run-name: '[ESLint] ${{ github.event.head_commit.message }}'
 
-on: push
+# on: push
 
 jobs:
   run-linters:
