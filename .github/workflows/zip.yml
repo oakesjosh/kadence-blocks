@@ -95,8 +95,7 @@ jobs:
                 script: |
                   const zipName = '${{ steps.get_zip_name.outputs.zip_name }}';
                   await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.name,
+                    ...context.repo,  // This spreads the owner and repo name correctly
                     issue_number: context.issue.number,
                     body: `The zip file name will be: \`${zipName}.zip\``
                   });
